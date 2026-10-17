@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Logged-in admin. IMPORTANT: also turn OFF "Enable create (sign-up)" in
+    // Firebase Console -> Authentication -> Settings -> User actions,
+    // so nobody else can create an account.
+    // For extra safety you can replace the body with:
+    //   request.auth != null && request.auth.token.email == 'your-admin-email@example.com'
+    function isAdmin() { return request.auth != null; }
+
+    // Website content: everyone can read, only the admin can write
+    match /cafe_settings/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /menu_items/{doc}    { allow read: if true; allow write: if isAdmin(); }
+    match /coupons/{doc}       { allow read: if true; allow write: if isAdmin(); }
+
+    // Reviews: visitors can add a valid review, admin manages
+    match /reviews/{doc} {
+      allow read: if true;
+      allow create: if isAdmin() || (
+        request.resource.data.author is string && request.resource.data.author.size() <= 100 &&
+        request.resource.data.comment is string && request.resource.data.comment.size() <= 1000 &&
+        request.resource.data.rating is number &&
+        request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    // Bookings: visitors can only create a valid booking; only the admin can read/manage
+    match /table_bookings/{doc} {
+      allow create: if isAdmin() || (
+        request.resource.data.name is string && request.resource.data.name.size() <= 100 &&
+        request.resource.data.phone is string && request.resource.data.phone.size() <= 40 &&
+        request.resource.data.guests is number &&
+        request.resource.data.guests >= 1 && request.resource.data.guests <= 100 &&
+        (!('specialRequest' in request.resource.data) ||
+          (request.resource.data.specialRequest is string && request.resource.data.specialRequest.size() <= 1000))
+      );
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}

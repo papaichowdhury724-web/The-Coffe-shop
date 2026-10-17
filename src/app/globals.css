@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+@layer base {
+  * {
+    border-color: rgba(212, 175, 55, 0.15);
+  }
+  
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #0A0807;
+    color: #FDF8F0;
+    overflow-x: hidden;
+  }
+
+  /* Custom subtle scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0A0807;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2E211A;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #D4AF37;
+  }
+}
+
+/* Sticky header must never cover an anchored section heading. */
+section[id] {
+  scroll-margin-top: 92px;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes subtleBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: subtleBounce 3s ease-in-out infinite;
+}
+
+/* Cinematic optical treatment */
+.film-grain {
+  width: 200%;
+  height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
+  animation: grainDrift 0.35s steps(2) infinite;
+  /* No mix-blend-mode: blending a full-screen layer over a live WebGL canvas is very costly. */
+}
+
+.vertical-chapter {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+/* Scroll entry: soft-focus cinema lens resolves into a crisp section. */
+.cinematic-reveal {
+  opacity: 0;
+  transform: translate3d(0, 72px, 0) scale(0.975);
+  transition:
+    opacity 1100ms cubic-bezier(.16, 1, .3, 1),
+    transform 1300ms cubic-bezier(.16, 1, .3, 1);
+  will-change: opacity, transform;
+}
+
+.cinematic-reveal[data-visible='true'] {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+/* A restrained travelling specular highlight on premium cards. */
+.cinematic-reveal section > div > div[class*='grid'] > div {
+  position: relative;
+}
+
+.cinematic-reveal section > div > div[class*='grid'] > div::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 25%, rgba(255,225,170,.045) 42%, transparent 58%);
+  background-size: 220% 100%;
+  background-position: 140% 0;
+  transition: background-position 900ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.cinematic-reveal section > div > div[class*='grid'] > div:hover::after {
+  background-position: -80% 0;
+}
+
+@keyframes grainDrift {
+  0% { transform: translate3d(-4%, 2%, 0); }
+  25% { transform: translate3d(3%, -5%, 0); }
+  50% { transform: translate3d(-2%, 6%, 0); }
+  75% { transform: translate3d(5%, 1%, 0); }
+  100% { transform: translate3d(-4%, 2%, 0); }
+}
+
+/* backdrop-filter over a live WebGL canvas is re-computed on every frame, on desktop too.
+   ~35 glass cards were doing it at once. Backgrounds are already mostly opaque, so drop it
+   everywhere except the header. */
+[class*='backdrop-blur']:not(header) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  /* Full-screen blend modes force costly repaints on phones — disable entirely. */
+  .film-grain { display: none; }
+  .cinematic-reveal {
+    transform: translate3d(0, 40px, 0);
+    filter: none;
+    transition:
+      opacity 900ms cubic-bezier(.16, 1, .3, 1),
+      transform 1000ms cubic-bezier(.16, 1, .3, 1);
+  }
+  .cinematic-reveal[data-visible='true'] { filter: none; }
+
+  /* backdrop-filter over a live WebGL canvas is re-computed every frame.
+     Their backgrounds are already mostly opaque, so drop the filter entirely on phones. */
+  [class*='backdrop-blur'] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .film-grain,
+  .animate-bounce-subtle {
+    animation: none !important;
+  }
+  .cinematic-reveal,
+  .cinematic-reveal[data-visible='true'] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Enter animations                                                    */
+/* The components use `animate-in fade-in zoom-in-95 slide-in-from-*`  */
+/* (tailwindcss-animate names) but that plugin isn't installed, so the */
+/* modals/drawers/toasts used to appear with no animation at all.      */
+/* ------------------------------------------------------------------ */
+@keyframes enter-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes enter-zoom { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes enter-top { from { opacity: 0; transform: translate3d(0, -1rem, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+@keyframes enter-bottom { from { opacity: 0; transform: translate3d(0, .75rem, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+@keyframes enter-right { from { transform: translate3d(100%, 0, 0); } to { transform: translate3d(0, 0, 0); } }
+
+.animate-in { animation: enter-fade 300ms cubic-bezier(.16, 1, .3, 1) backwards; }
+.animate-in.zoom-in-95 { animation-name: enter-zoom; }
+.animate-in.slide-in-from-top-4 { animation-name: enter-top; }
+.animate-in.slide-in-from-bottom-3 { animation-name: enter-bottom; }
+.animate-in.slide-in-from-right { animation-name: enter-right; }
+.animate-fade-in { animation: enter-fade 600ms ease-out backwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-in, .animate-fade-in { animation: none !important; }
+}
